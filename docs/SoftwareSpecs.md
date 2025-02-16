@@ -5,8 +5,8 @@
 
 |                                  | Běžný účet | Spořicí účet | Kreditní účet |
 | :------------------------------- | :---------- | :----------- | :------------ |
-| Přijímání a odesílání plateb     | ano          | ano           | ne            |
-| Převod mezi účty                 | ano          | ano           | ne            |
+| Přijímání a odesílání plateb     | ano          | ano           | ano           |
+| Převod mezi účty                 | ano          | ano           | ano           |
 | Úročení zůstatku                 | ne          | ano           | ne            |
 | Možnost překročení zůstatku      | ne          | ne           | ano            |
 | Limity výběru prostředků         | ne          | ano           | ano            |
