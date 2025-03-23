@@ -78,6 +78,10 @@ namespace Core.Db.Users
         return "500";
       }
     }
+    public virtual void ClockIntrest()
+    {
+      new Exception("Permission denied");
+    }
 
     public virtual Account[] GetAccounts()
     {
@@ -154,7 +158,7 @@ namespace Core.Db.Users
     public Result<User, string> CreateUser(string name,int age, string email, string password, Role role) => "Only admin can create users";
     public override Account[] GetAccounts()
     {
-      return db.Accounts.Take(100).ToArray();
+      return db.Accounts.ToArray();
     }
     public override Transaction[] GetTransactions()
     {
@@ -167,6 +171,19 @@ namespace Core.Db.Users
     public override  Result<Account, string> CreateAccount(string name,AccountType accountType, User user)
     {
       return "Not Authorized";
+    }
+    public override void ClockIntrest()
+    {
+      foreach (var account in db.Accounts.Where(a => a.Type == AccountType.Savings))
+      {
+        account.Balance += (int)(account.Balance * 0.02m);
+      }
+      foreach (var account in db.Accounts.Where(a => a.Type == AccountType.Credit && a.Balance < 0))
+      {
+        account.Balance += (int)(account.Balance * 0.05m);
+      }
+
+      db.SaveChanges();
     }
 
   }

@@ -1,4 +1,5 @@
 using Core.Db.Accounts;
+using static Core.Db.Accounts.AccountOperations;
 using Core.Db.Users;
 namespace Core.Db
 {
@@ -50,7 +51,6 @@ namespace Core.Db
             {
             Name = "Savings",
             Type = AccountType.Savings,
-            WeeklyLimit = 1000,
             Balance = 0,
             OwnerId = db.Users.First(u => u.Email == "bob@bob.com").Id
             });

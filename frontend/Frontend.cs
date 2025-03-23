@@ -1,7 +1,7 @@
 using Core.Db;
-using Core.Db.Accounts;
 using Core.Db.Users;
 using Spectre.Console;
+using static Core.Db.Accounts.AccountOperations;
 
 namespace Core.Frontend
 {
