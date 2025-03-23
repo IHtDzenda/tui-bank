@@ -34,6 +34,7 @@ namespace Core.Db
     public Guid OwnerId { get; set; } 
     public User Owner { get; set; } = null!;
     public int Balance { get; set; }
+    public int WeeklyLimit { get; set; }
     public ICollection<Transaction> TransactionsRecived { get; } = new List<Transaction>();
     public ICollection<Transaction> TransactionsSent { get; } = new List<Transaction>();
   }

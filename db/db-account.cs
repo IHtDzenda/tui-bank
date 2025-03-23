@@ -2,94 +2,97 @@ namespace Core.Db.Accounts
 {
   public class AccountOperations
   {
+    protected User ctx { get; }
+    protected DBContext db { get; }
+    protected Account account { get; }
 
-    private User ctx { get; set; }
-    private DBContext db { get; set; }
-    private Account acount { get; set; }
-
-    public AccountOperations(User _ctx, DBContext _db, Account _acount)
+    public AccountOperations(User _ctx, Account _account, DBContext _db)
     {
       ctx = _ctx;
       db = _db;
-      acount = _acount;
-      
+      account = _account;
     }
-    public Result<Transaction, string> SendMoney(Guid reciverId, int amount)
+
+    public virtual Result<Transaction, string> SendMoney(Guid receiverId, int amount)
     {
       try
       {
-        Account reciveringAccount = db.Accounts.Find(reciverId);
-        if (reciveringAccount== null)
+        Account receivingAccount = db.Accounts.Find(receiverId);
+        if (receivingAccount == null)
         {
-          return "Reciver not found";
+          return "Receiver not found";
+        }
+
+        if (account.Balance < amount)
+        {
+          return "Insufficient funds";
         }
 
         Transaction transaction = new Transaction
         {
-          Sender = acount ,
-          Reciver = reciveringAccount,
-          Amount = amount,
-          Id = Guid.NewGuid(),
-          SenderId = acount.Id,
-          ReciverId = reciveringAccount.Id,
+          Sender = account,
+                 Reciver = receivingAccount,
+                 Amount = amount,
+                 Id = Guid.NewGuid(),
+                 SenderId = account.Id,
+                 ReciverId = receivingAccount.Id,
         };
-    
+
+        account.Balance -= amount;
+        receivingAccount.Balance += amount;
+
         db.Transactions.Add(transaction);
-        var updatedSender  =db.Accounts.Find(acount.Id);
-        var updatedReciver = db.Accounts.Find(reciverId);
-        if (updatedSender == null || updatedReciver == null)
-        {
-          return "Account not found";
-        }
-        updatedSender.Balance -= amount;
-        updatedReciver.Balance += amount;
-        db.Update(updatedSender);
-        db.Update(updatedReciver);
         db.SaveChanges();
         return transaction;
       }
-      catch (System.Exception e)
+      catch (Exception e)
       {
-          Console.WriteLine(e.Message);
-          return "500";
+        Console.WriteLine(e.Message);
+        return "500";
       }
     }
   }
+
   public class CreditAccountOperations : AccountOperations
   {
-    private User ctx { get; set; }
-    private DBContext db { get; set; }
-    private Account acount { get; set; }
+    public CreditAccountOperations(User _ctx, Account _account, DBContext _db) 
+      : base(_ctx, _account, _db) { }
 
-    public CreditAccountOperations(User _ctx, DBContext _db, Account _acount) : base(_ctx, _db, _acount)
+    public override Result<Transaction, string> SendMoney(Guid receiverId, int amount)
     {
-      ctx = _ctx;
-      db = _db;
-      acount = _acount;
-      
+      return base.SendMoney(receiverId, amount);
     }
-    public new Result<Transaction, string> SendMoney(Guid reciverId, int amount) => base.SendMoney(reciverId, amount);
   }
-public class SavingsAccountOperations : AccountOperations
-  {
-    private User ctx { get; set; }
-    private DBContext db { get; set; }
-    private Account acount { get; set; }
 
-    public SavingsAccountOperations(User _ctx, DBContext _db, Account _acount) : base(_ctx, _db, _acount)
+  public class SavingsAccountOperations : AccountOperations
+  {
+    public SavingsAccountOperations(User _ctx, Account _account, DBContext _db) 
+      : base(_ctx, _account, _db) { }
+
+    public override Result<Transaction, string> SendMoney(Guid receiverId, int amount)
     {
-      ctx = _ctx;
-      db = _db;
-      acount = _acount;
-      
-    }
-    public new Result<Transaction, string> SendMoney(Guid reciverId, int amount)
-    { 
-      if (acount.Balance < amount) {
+      // Add savings-specific checks before calling base method
+      if (account.Balance < amount) 
+      {
         return "Not enough money";
       }
-      return base.SendMoney(reciverId, amount);
+      return base.SendMoney(receiverId, amount);
+    }
+  }
+
+  public class CheckingAccountOperations : AccountOperations
+  {
+    public CheckingAccountOperations(User _ctx, Account _account, DBContext _db) 
+      : base(_ctx, _account, _db) { }
+
+    public override Result<Transaction, string> SendMoney(Guid receiverId, int amount)
+    {
+      // Add savings-specific checks before calling base method
+      if (account.Balance < amount) 
+      {
+        return "Not enough money";
+      }
+      return base.SendMoney(receiverId, amount);
     }
   }
 }
-

@@ -1,6 +1,0 @@
-@OOPBanka_HostAddress = http://localhost:5081
-
-GET {{OOPBanka_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

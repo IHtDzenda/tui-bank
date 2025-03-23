@@ -1,11 +1,11 @@
 namespace Core.Db.Users
 {
-  public class UserOpetaion
+  public class UserOpetaions
   {
     private User ctx { get; set; }
     private DBContext db { get; set; }
 
-    public UserOpetaion(User _ctx, DBContext _db)
+    public UserOpetaions(User _ctx, DBContext _db)
     {
       ctx = _ctx;
       db = _db;
@@ -32,7 +32,30 @@ namespace Core.Db.Users
         return "500";
       }
     }
-    public Result<Account, string> CreateAccount(string name,AccountType accountType)
+    public virtual Result<Account, string> CreateAccount(string name,AccountType accountType,User user)
+    {
+      try
+      {
+        Account account = new Account
+        {
+          Name = name,
+               Type = accountType,
+               Owner = user,
+               Id = Guid.NewGuid(),
+               Balance = 0,
+               OwnerId = user.Id,
+        };
+        db.Accounts.Add(account);
+        db.SaveChanges();
+        return  account;
+      }
+      catch (System.Exception e)
+      {
+        Console.WriteLine(e.Message);
+        return "500";
+      }
+    }
+    public virtual Result<Account, string> CreateAccount(string name,AccountType accountType)
     {
       try
       {
@@ -56,9 +79,25 @@ namespace Core.Db.Users
       }
     }
 
+    public virtual Account[] GetAccounts()
+    {
+      throw new System.NotImplementedException();
+    }
+    public virtual Transaction[] GetTransactions()
+    {
+      throw new System.NotImplementedException();
+    }
+    public virtual User[] GetUsers()
+    {
+      throw new Exception("Permission denied");
+    }
+    public virtual void DeleteUser(Guid id)
+    {
+      throw new Exception("Permission denied");
+    }
 
   }
-  public class AdminUserOperations : UserOpetaion
+  public class AdminUserOperations : UserOpetaions
   {
 
     private User ctx { get; set; }
@@ -74,8 +113,34 @@ namespace Core.Db.Users
     {
       return base.CreateUser(name, isOver18, email, password, role);
     }
+    public override Account[] GetAccounts()
+    {
+      return db.Accounts.ToArray();
+    }
+    public override Transaction[] GetTransactions()
+    {
+      return db.Transactions.ToArray();
+    }
+    public override  Result<Account, string> CreateAccount(string name,AccountType accountType)
+    {
+      return base.CreateAccount(name, accountType);
+    }
+    public override  Result<Account, string> CreateAccount(string name,AccountType accountType, User user)
+    {
+      return base.CreateAccount(name, accountType, user);
+    }
+    public override User[] GetUsers()
+    {
+      return db.Users.ToArray();
+    }
+    public override void DeleteUser(Guid id)
+    {
+      db.Users.Remove(db.Users.First(e => e.Id == id));
+      db.SaveChanges();
+    }
+
   }
-  public class ManagerUserOperations : UserOpetaion
+  public class ManagerUserOperations : UserOpetaions
   {
 
     private User ctx { get; set; }
@@ -87,9 +152,25 @@ namespace Core.Db.Users
       db = _db;
     }
     public Result<User, string> CreateUser(string name,int age, string email, string password, Role role) => "Only admin can create users";
+    public override Account[] GetAccounts()
+    {
+      return db.Accounts.Take(100).ToArray();
+    }
+    public override Transaction[] GetTransactions()
+    {
+      return db.Transactions.Take(100).ToArray();
+    }
+    public override  Result<Account, string> CreateAccount(string name,AccountType accountType)
+    {
+      return base.CreateAccount(name, accountType);
+    }
+    public override  Result<Account, string> CreateAccount(string name,AccountType accountType, User user)
+    {
+      return "Not Authorized";
+    }
 
   }
-  public class UserUserOperations : UserOpetaion
+  public class UserUserOperations : UserOpetaions
   {
     private User ctx { get; set; }
     private DBContext db { get; set; }
@@ -108,6 +189,17 @@ namespace Core.Db.Users
       }
       return base.CreateAccount(name, accountType);
 
+    }
+    public override Account[] GetAccounts()
+      => db.Accounts.Where(e => e.OwnerId == ctx.Id).ToArray();
+    public override Transaction[] GetTransactions()
+    {
+      return db.Transactions.Where(e => e.SenderId == ctx.Id || e.ReciverId == ctx.Id).ToArray();
+    }
+
+    public override  Result<Account, string> CreateAccount(string name,AccountType accountType, User user)
+    {
+      return "Not Authorized";
     }
   }
 }
