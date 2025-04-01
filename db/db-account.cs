@@ -73,6 +73,11 @@ namespace Core.Db.Accounts
 
     }
 
+    public Account[] GetAccounts() 
+    {
+      Account[] acc = db.Accounts.Where(e=> e.Owner.Id == ctx.Id).ToArray();
+      return acc;
+    }
     public Transaction[] GetTransactions()
     {
       return db.Transactions.Where(e => e.SenderId == ctx.Id || e.ReciverId == ctx.Id).ToArray();

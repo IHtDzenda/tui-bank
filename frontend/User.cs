@@ -49,7 +49,17 @@ namespace Core.Frontend
             if (CurrentTab + 1 <= Tabs.Payments)
               CurrentTab = CurrentTab + 1;
             break;
+          case ConsoleKey.A:
+            if (CurrentTab == Tabs.Accounts)
+            {
+              CreateAccount();
+            }
+            break;
           default:
+            if (CurrentTab == Tabs.Payments)
+            {
+              PayPage(key.Key);
+            }
             break;
         }
       }
@@ -98,21 +108,20 @@ namespace Core.Frontend
         accounts[i] = $"[green]({i})[/] {State.Accounts[i].Name} \n   [grey]Balance: {State.Accounts[i].Balance}[/]";
       }
 
-      return new Markup($"Accounts: \n{string.Join("\n", accounts)} \n\n");
+      return new Markup($"Accounts: \n{string.Join("\n", accounts)} \n\nto create an account, press 'A'");
     }
-
-    private IRenderable RenderPayments()
+    private void PayPage(ConsoleKey key)
     {
-      var panel = new Panel(
-          new Markup("[green]Make a Payment[/]\n\n[bold]Press 'Enter' to proceed[/]")
-          ).Expand().Header("Payments", Justify.Center);
+      
+      string recipient = "";
 
-      AnsiConsole.Write(panel);
-
-      if (Console.ReadKey().Key == ConsoleKey.Enter)
+      if (key == ConsoleKey.Enter || key == ConsoleKey.W)
       {
+        if (key == ConsoleKey.W)
+        {
+          recipient = State.UserOperations.GetATMID().ToString();
+        }
         Console.Clear();
-
         var accountChoices = State.Accounts.Select((a,i) => $"{i}) {a.Name} (Balance: {a.Balance}€) #{a.Id}").ToList();
         int selectedAccountIndex = int.Parse(AnsiConsole.Prompt(
               new SelectionPrompt<string>()
@@ -127,8 +136,7 @@ namespace Core.Frontend
         string[] pastRecipients = transactions.Select(e => e.Reciver.Name).ToArray().Concat(transactions.Select(e => e.Sender.Name)).ToArray();
 
 
-        string recipient;
-        do 
+        while (!State.AccountOperations.ValaditeAccountNumber(recipient)) 
         {
           if (pastRecipients.Length > 0)
           {
@@ -156,7 +164,7 @@ namespace Core.Frontend
           }
           Console.Clear();
 
-        } while (!State.AccountOperations.ValaditeAccountNumber(recipient));
+        } ;
 
         decimal amount = AnsiConsole.Ask<int>("Enter amount:");
         bool confirm = AnsiConsole.Confirm($"Are you sure you want to send [green]{amount}[/] from [blue]{selectedAccount.Name}[/] to [yellow]{recipient}[/]?");
@@ -172,7 +180,7 @@ namespace Core.Frontend
           {
             AnsiConsole.MarkupLine($"[bold red]Payment failed: {res.Error}[/]");
           }
-          Thread.Sleep(5000);
+          Thread.Sleep(2000);
         }
         else
         {
@@ -183,7 +191,42 @@ namespace Core.Frontend
         Console.ReadKey();
       }
 
+    }
+    private IRenderable RenderPayments()
+    {
+
+      
+      return    new Markup("[green]Make a Payment[/]\n\n[bold]Press 'Enter' to proceed[/], or press 'W' to withdraw cash");
+
+
+
       return new Markup("[bold]Payments Menu[/]\n\nNavigate using arrow keys.");
+    }
+    void CreateAccount()
+    {
+      Console.Clear();
+      var name = AnsiConsole.Ask<string>("Enter account [green]name:[/]");
+      string[] options =  State.User.IsOver18 ? new string[]  { "Checking", "Savings", "Credit" } : new string[] { "Checking", "Savings" };
+      var AccountType = AnsiConsole.Prompt(
+          new TextPrompt<string>("What type of [green]account?[/]")
+          .AddChoices(options)) switch {
+        "Checking" => Db.AccountType.Checking,
+          "Savings" => Db.AccountType.Savings,
+          "Credit" => Db.AccountType.Credit,
+          _ => Db.AccountType.Checking
+      };
+      var res = State.UserOperations.CreateAccount(name, AccountType);
+      if (res.IsOk)
+      {
+        AnsiConsole.MarkupLine($"[bold green]Account created![/]");
+      }
+      else
+      {
+        AnsiConsole.MarkupLine($"[bold red]Account creation failed: {res.Error}[/]");
+      }
+      AnsiConsole.MarkupLine("\nPress any key to return...");
+      Console.ReadKey();
+      State.Accounts = State.AccountOperations.GetAccounts();
     }
   }
 }

@@ -32,6 +32,12 @@ namespace Core.Db.Users
         return "500";
       }
     }
+    public virtual Guid GetATMID()
+    {
+      Guid id = db.Users.Where(acc=>acc.Email == "cash@bank.com").First().Id;
+
+      return db.Accounts.Where(acc=>acc.OwnerId == id).First().Id;
+    }
     public virtual Result<Account, string> CreateAccount(string name,AccountType accountType,User user)
     {
       try

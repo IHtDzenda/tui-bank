@@ -32,6 +32,14 @@ namespace Core.Db
 
         db.Users.Add(new User
             {
+            Name = "ATM USER",
+            Email = "cash@bank.com",
+            Password = "ATM",
+            Role = Role.User,
+            IsOver18 = true,
+            });
+        db.Users.Add(new User
+            {
             Name = "Bob Smith MANAGER",
             Email = "alice@alice.com",
             Password = "alice",
@@ -62,6 +70,14 @@ namespace Core.Db
             Balance = 0,
             OwnerId = db.Users.First(u => u.Email == "bob@bob.com").Id
             });
+        db.Accounts.Add(new Account
+            {
+            Name = "CASH WITHDRAW",
+            Type = AccountType.Savings,
+            Balance = 0,
+            OwnerId = db.Users.First(u => u.Email == "cash@bank.com").Id
+            });
+
         db.SaveChanges();
         AccountOperations checkingAccountOperations = new CheckingAccountOperations(db.Users.First(u => u.Email == "admin@admin.com"), db.Accounts.First(a => a.Type == AccountType.Checking), db);
         checkingAccountOperations.SendMoney(db.Accounts.First(a => a.Type == AccountType.Savings).Id, 10);
